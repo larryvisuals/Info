@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地緣經濟深層分析：川普對伊政策動機探討</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* CSS Variables for Theme */
+        :root {
+            --bg-main: #fafaf9; /* stone-50 */
+            --text-main: #1e293b; /* slate-800 */
+            --text-muted: #475569; /* slate-600 */
+            --accent-gold: #d97706; /* amber-600 */
+            --accent-red: #be123c; /* rose-700 */
+            --border-color: #e2e8f0; /* slate-200 */
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        /* * MANDATORY CHART CONTAINER STYLING 
+         * Ensures charts are responsive, do not overflow, and maintain readable proportions.
+         */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 35vh; /* Base height */
+            min-height: 250px;
+            max-height: 400px;
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 45vh;
+            }
+        }
+
+        /* Custom Scrollbar for inner content areas if needed */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        .nav-btn.active {
+            background-color: #f1f5f9; /* slate-100 */
+            border-left-width: 4px;
+            border-left-color: var(--accent-gold);
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Diagram Elements (HTML/CSS Based) */
+        .node-box {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .node-box:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+<!-- Chosen Palette: Warm Neutrals with Muted Gold and Rose Accents -->
+<!-- Application Structure Plan: 
+    A dashboard-style layout with a persistent left sidebar (on desktop) for navigation and a main content area. 
+    This allows users to seamlessly switch between the three core hypotheses (Petrodollar, Tariffs, Debt) without losing context.
+    Each section acts as a focused analytical module containing interactive charts and synthesized textual analysis, ending with a synthesis view. 
+    This non-linear structure respects the user's choice of exploration path.
+-->
+<!-- Visualization & Content Choices: 
+    1. Petrodollar: Line chart (Chart.js) showing simulated shift in global oil trade currency shares. Goal: Illustrate the threat of de-dollarization. Interaction: Toggle scenario to see impact. Justification: Clear visualization of changing proportions over time.
+    2. Tariffs: Radar chart (Chart.js) showing leverage dimensions. Goal: Show how military posturing connects to economic negotiation. Interaction: Hover details. Justification: Good for multi-dimensional strategic concepts.
+    3. US Debt & Venezuela: Dual-axis Bar/Line chart (Chart.js) and HTML comparative timeline. Goal: Correlate rising debt with interventions in oil-rich nations. Justification: Mixes quantitative trend (debt) with qualitative history (Venezuela precedent).
+    * ALL visual elements use Canvas or styled HTML/CSS. NO SVG/Mermaid used.
+-->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+<div class="min-h-screen flex flex-col md:flex-row">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="w-full md:w-64 bg-white border-r border-slate-200 flex-shrink-0 z-10 shadow-sm md:shadow-none sticky top-0 md:h-screen overflow-y-auto">
+        <div class="p-6">
+            <h1 class="text-xl font-bold text-slate-800 leading-tight">地緣經濟戰略情報</h1>
+            <p class="text-xs text-slate-500 mt-1 uppercase tracking-wider">川普對伊政策動機分析</p>
+        </div>
+        <nav class="flex flex-col gap-1 px-4 pb-6">
+            <button onclick="navigate('overview')" id="btn-overview" class="nav-btn active text-left px-4 py-3 rounded-md text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                <span class="mr-2">■</span> 戰略總覽
+            </button>
+            <button onclick="navigate('petrodollar')" id="btn-petrodollar" class="nav-btn text-left px-4 py-3 rounded-md text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                <span class="mr-2">1</span> 石油美元體系保衛戰
+            </button>
+            <button onclick="navigate('tariffs')" id="btn-tariffs" class="nav-btn text-left px-4 py-3 rounded-md text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                <span class="mr-2">2</span> 對等關稅與極限施壓
+            </button>
+            <button onclick="navigate('debt')" id="btn-debt" class="nav-btn text-left px-4 py-3 rounded-md text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                <span class="mr-2">3</span> 美債危機與委國啟示
+            </button>
+            <button onclick="navigate('synthesis')" id="btn-synthesis" class="nav-btn text-left px-4 py-3 rounded-md text-sm text-slate-600 hover:bg-slate-50 transition-colors mt-4 border-t border-slate-100 pt-4">
+                <span class="mr-2">◆</span> 綜合戰略推演
+            </button>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 md:p-10 lg:p-12 overflow-x-hidden">
+        
+        <!-- SECTION: Overview -->
+        <section id="sec-overview" class="content-section fade-in">
+            <header class="mb-8">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-800 mb-4">表面衝突下的深層經濟邏輯</h2>
+                <p class="text-lg text-slate-600 leading-relaxed max-w-3xl">
+                    探討川普政府針對伊朗可能採取的軍事或極限施壓行動，若僅從核協議或中東區域安全角度切入，恐見樹不見林。本分析報告旨在提供一個互動式框架，從宏觀地緣經濟的三大核心維度：<strong>石油美元壟斷、全球貿易談判籌碼、以及美國內部債務危機</strong>，來解構對抗背後的潛在驅動力。
+                </p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+                <!-- Info Cards built with Tailwind -->
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="navigate('petrodollar')">
+                    <div class="text-amber-600 text-2xl font-black mb-2">01</div>
+                    <h3 class="text-xl font-bold mb-3">石油美元</h3>
+                    <p class="text-sm text-slate-600">伊朗推動非美元原油結算，直指美國金融霸權的核心基礎。軍事威懾旨在殺雞儆猴。</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="navigate('tariffs')">
+                    <div class="text-amber-600 text-2xl font-black mb-2">02</div>
+                    <h3 class="text-xl font-bold mb-3">對等關稅籌碼</h3>
+                    <p class="text-sm text-slate-600">展現「不惜動武」的狂人姿態，為其在全球推動對等關稅及重新談判貿易協定時，增加無形的施壓籌碼。</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="navigate('debt')">
+                    <div class="text-amber-600 text-2xl font-black mb-2">03</div>
+                    <h3 class="text-xl font-bold mb-3">美債與委國模式</h3>
+                    <p class="text-sm text-slate-600">借鏡干預委內瑞拉的經驗，控制全球主要產油國，確保全球持續需要美元，以支撐不斷攀升的美國國債。</p>
+                </div>
+            </div>
+            <div class="mt-12 p-6 bg-slate-800 text-white rounded-xl">
+                <p class="text-center italic">「戰爭，是政治的延續；而政治，往往是經濟利益的武裝。」</p>
+                <div class="text-center mt-4">
+                    <button onclick="navigate('petrodollar')" class="px-6 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded transition-colors">開始深度探索</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 1: Petrodollar -->
+        <section id="sec-petrodollar" class="content-section hidden">
+            <header class="mb-8 border-b border-slate-200 pb-4">
+                <span class="text-amber-600 font-bold uppercase tracking-wider text-sm">維度一</span>
+                <h2 class="text-3xl font-extrabold text-slate-800 mt-1">石油美元體系保衛戰</h2>
+                <p class="mt-4 text-slate-600 max-w-4xl">
+                    自1970年代起，全球石油貿易主要以美元結算（Petrodollar），這創造了全球對美元的「剛性需求」，是美國金融霸權的基石。伊朗（及俄羅斯等國）嘗試建立非美元結算機制（如歐元、人民幣或黃金），直接威脅了這一體系。打擊伊朗，不僅是區域政治，更是維護美元全球儲備貨幣地位的防禦戰。
+                </p>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2">
+                    <!-- Interactive Chart Container -->
+                    <div class="chart-container">
+                        <canvas id="petroChart"></canvas>
+                    </div>
+                    <div class="flex justify-center gap-4 mt-4">
+                        <button onclick="updatePetroChart('statusQuo')" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-sm rounded font-medium transition-colors">當前美元主導情境</button>
+                        <button onclick="updatePetroChart('dedollarization')" class="px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-800 text-sm rounded font-medium border border-rose-300 transition-colors">模擬去美元化衝擊</button>
+                    </div>
+                </div>
+                
+                <div class="space-y-6">
+                    <div class="bg-white p-5 rounded-lg border border-slate-200">
+                        <h4 class="font-bold text-slate-800 flex items-center"><span class="text-xl mr-2">🛢️</span> 核心機制</h4>
+                        <p class="text-sm text-slate-600 mt-2">各國需購買石油 ➔ 必須持有美元 ➔ 將多餘美元買美債 ➔ 美國獲得廉價融資。若伊朗成功打破此循環，美元價值將受挫。</p>
+                    </div>
+                    <div class="bg-stone-100 p-5 rounded-lg border border-stone-200 border-l-4 border-l-amber-600">
+                        <h4 class="font-bold text-slate-800">戰略動機分析</h4>
+                        <ul class="text-sm text-slate-700 mt-2 space-y-2">
+                            <li>• <strong>遏制示範效應：</strong> 阻止其他產油國效仿伊朗放棄美元。</li>
+                            <li>• <strong>控制定價權：</strong> 確保中東原油定價體系不脫離華爾街掌控。</li>
+                            <li>• <strong>金融制裁有效性：</strong> 依賴SWIFT系統的制裁只有在對方使用美元時才最有效。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Tariffs -->
+        <section id="sec-tariffs" class="content-section hidden">
+            <header class="mb-8 border-b border-slate-200 pb-4">
+                <span class="text-amber-600 font-bold uppercase tracking-wider text-sm">維度二</span>
+                <h2 class="text-3xl font-extrabold text-slate-800 mt-1">對等關稅與極限施壓戰略</h2>
+                <p class="mt-4 text-slate-600 max-w-4xl">
+                    川普政府的經濟核心是「美國優先」與「對等關稅」（Reciprocal Tariffs）。在國際談判桌上，軍事威脅往往是經濟施壓的延伸。對伊朗展現出強硬、甚至不可預測的軍事打擊意圖（即「狂人理論」），能在與中國、歐洲等主要貿易夥伴的關稅談判中，創造強大的心理威懾力，迫使對手在經濟條款上讓步。
+                </p>
+            </header>
+
+            <div class="bg-white p-6 rounded-xl border border-slate-200 mb-8">
+                <h3 class="text-lg font-bold text-center mb-6">戰略槓桿聯動模型</h3>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-8">
+                    <!-- Custom HTML diagram representing pressure nodes -->
+                    <div class="flex flex-col items-center">
+                        <div class="w-24 h-24 rounded-full bg-rose-100 flex items-center justify-center border-4 border-rose-500 mb-2 shadow-lg">
+                            <span class="font-bold text-rose-700">軍事邊緣</span>
+                        </div>
+                        <span class="text-xs text-slate-500">對伊強硬姿態</span>
+                    </div>
+                    
+                    <div class="hidden md:flex flex-col items-center text-slate-400">
+                        <span class="text-2xl">➔</span>
+                        <span class="text-[10px] uppercase tracking-wide">放大威懾</span>
+                    </div>
+
+                    <div class="flex flex-col items-center">
+                        <div class="w-32 h-32 rounded-full bg-slate-800 flex items-center justify-center border-4 border-slate-600 mb-2 shadow-xl transform scale-105">
+                            <span class="font-bold text-white text-center">全球貿易<br>談判主導權</span>
+                        </div>
+                        <span class="text-xs text-slate-500">對等關稅推行</span>
+                    </div>
+
+                    <div class="hidden md:flex flex-col items-center text-slate-400">
+                        <span class="text-2xl">➔</span>
+                        <span class="text-[10px] uppercase tracking-wide">迫使讓步</span>
+                    </div>
+
+                    <div class="flex flex-col items-center">
+                        <div class="w-24 h-24 rounded-full bg-emerald-100 flex items-center justify-center border-4 border-emerald-500 mb-2 shadow-lg">
+                            <span class="font-bold text-emerald-700 text-center">製造業<br>回流</span>
+                        </div>
+                        <span class="text-xs text-slate-500">國內經濟目標</span>
+                    </div>
+                </div>
+                <div class="mt-8 text-center">
+                     <p class="text-sm text-slate-600 max-w-2xl mx-auto">互動說明：此模型展示了「項莊舞劍，意在沛公」的策略。對伊朗的極限施壓（高點）不僅是區域問題，更是為了提高美國在全球關稅談判桌上的聲量（槓桿點），最終服務於其國內經濟重構（終點）。</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div class="chart-container">
+                    <canvas id="tariffRadarChart"></canvas>
+                </div>
+                <div class="flex flex-col justify-center space-y-4">
+                    <h4 class="font-bold text-xl text-slate-800">「狂人理論」的談判應用</h4>
+                    <p class="text-slate-600">理查·尼克森曾提出狂人理論（Madman Theory），讓對手相信領導人是不理性且具破壞性的，從而避免觸碰底線。將此應用於現代：</p>
+                    <ul class="list-disc pl-5 space-y-2 text-slate-700 text-sm">
+                        <li><strong>不確定性溢價：</strong> 對伊朗隨時可能動武的姿態，增加全球市場避險情緒，促使資金回流美國。</li>
+                        <li><strong>震懾貿易對手：</strong> 向其他面對美國關稅威脅的國家發出信號：「我們連戰爭都不怕，更不會在關稅戰中退縮。」</li>
+                        <li><strong>綁定盟友：</strong> 藉由製造中東危機，迫使依賴中東能源的歐洲或亞洲盟友，在貿易條款上對美妥協以換取安全保障。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: Debt & Venezuela -->
+        <section id="sec-debt" class="content-section hidden">
+            <header class="mb-8 border-b border-slate-200 pb-4">
+                <span class="text-amber-600 font-bold uppercase tracking-wider text-sm">維度三</span>
+                <h2 class="text-3xl font-extrabold text-slate-800 mt-1">美債危機與委內瑞拉啟示錄</h2>
+                <p class="mt-4 text-slate-600 max-w-4xl">
+                    美國國債規模屢創新高。要維持如此龐大的債務不崩盤，必須確保全球對美元及美債的持續購買力。前陣子美國對委內瑞拉（全球原油儲量第一）的嚴厲制裁與政權干預嘗試，提供了一個觀察範本。伊朗與委內瑞拉有著驚人的相似性：石油資源豐富、反美立場、且嘗試推行非美元化。
+                </p>
+            </header>
+
+            <div class="mb-6 flex items-center justify-between bg-rose-50 p-4 rounded-lg border border-rose-100">
+                <div>
+                    <h3 class="font-bold text-rose-800">核心邏輯：石油 ➔ 美元 ➔ 美債</h3>
+                    <p class="text-sm text-rose-700 mt-1">控制主要產油國，不僅是控制能源，更是維持美債流動性的金融維穩手段。</p>
+                </div>
+                <div class="text-3xl">🏦</div>
+            </div>
+
+            <div class="chart-container mb-8">
+                <canvas id="debtChart"></canvas>
+            </div>
+
+            <h3 class="text-xl font-bold text-slate-800 mb-4 mt-12 text-center">地緣政治模式比對：委內瑞拉 vs. 伊朗</h3>
+            
+            <!-- Interactive HTML Comparison Table/Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Venezuela Card -->
+                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                    <div class="bg-slate-100 p-4 border-b border-slate-200 flex justify-between items-center">
+                        <h4 class="font-bold text-lg">🇻🇪 委內瑞拉 (前車之鑑)</h4>
+                        <span class="px-2 py-1 bg-slate-200 text-xs rounded font-mono">2017-2019</span>
+                    </div>
+                    <div class="p-4 space-y-4">
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 text-sm">1</div>
+                            <div>
+                                <h5 class="font-semibold text-sm">推行非美元化</h5>
+                                <p class="text-xs text-slate-600">2017年宣佈官方匯率放棄美元，改用人民幣等一籃子貨幣計價石油。</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0 text-sm text-rose-700">2</div>
+                            <div>
+                                <h5 class="font-semibold text-sm">遭受極限金融制裁</h5>
+                                <p class="text-xs text-slate-600">美國切斷其進入美國金融體系途徑，制裁其國家石油公司(PDVSA)。</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center flex-shrink-0 text-sm">3</div>
+                            <div>
+                                <h5 class="font-semibold text-sm">政權顛覆壓力</h5>
+                                <p class="text-xs text-slate-600">承認反對派領袖，施加強大軍事干預壓力，試圖更換政權以重新掌控資源分配。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Iran Card -->
+                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm ring-2 ring-amber-500 ring-offset-2">
+                    <div class="bg-amber-50 p-4 border-b border-amber-200 flex justify-between items-center">
+                        <h4 class="font-bold text-lg">🇮🇷 伊朗 (當前目標)</h4>
+                        <span class="px-2 py-1 bg-amber-200 text-xs rounded font-mono text-amber-800">現在進行式</span>
+                    </div>
+                    <div class="p-4 space-y-4">
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 text-sm">1</div>
+                            <div>
+                                <h5 class="font-semibold text-sm">去美元化先鋒</h5>
+                                <p class="text-xs text-slate-600">長期致力於擺脫美元結算，建立替代支付機制(如INSTEX)，並增加人民幣結算比例。</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0 text-sm text-rose-700">2</div>
+                            <div>
+                                <h5 class="font-semibold text-sm">退出核協議與制裁恢復</h5>
+                                <p class="text-xs text-slate-600">川普單方面退出JCPOA，恢復並加碼「史上最嚴厲制裁」，切斷其原油出口。</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-full bg-rose-800 text-white flex items-center justify-center flex-shrink-0 text-sm">3</div>
+                            <div>
+                                <h5 class="font-semibold text-sm">軍事威懾與定點打擊</h5>
+                                <p class="text-xs text-slate-600">不僅是經濟制裁，更升級至軍事層面（如擊殺蘇萊曼尼），複製並強化委國模式的施壓路徑。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-center text-sm text-slate-500 mt-6 italic">結論：對伊朗的行動，某種程度上是處理委內瑞拉問題「劇本」的升級版，核心目的皆在維護美元體系以支撐龐大國債。</p>
+        </section>
+
+        <!-- SECTION 4: Synthesis -->
+        <section id="sec-synthesis" class="content-section hidden">
+            <header class="mb-10 text-center">
+                <h2 class="text-3xl font-extrabold text-slate-800">綜合戰略推演：完美風暴的成因</h2>
+                <p class="mt-4 text-slate-600 max-w-2xl mx-auto">
+                    這三個維度並非獨立存在，而是互相交織，構成了一個完整的地緣經濟戰略邏輯鏈。
+                </p>
+            </header>
+
+            <div class="max-w-4xl mx-auto bg-stone-50 p-8 rounded-2xl border border-slate-200 shadow-inner">
+                <!-- HTML flow diagram -->
+                <div class="flex flex-col md:flex-row items-center justify-between relative">
+                    
+                    <!-- Line connecting everything in background for desktop -->
+                    <div class="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-slate-300 -z-10 transform -translate-y-1/2"></div>
+
+                    <div class="node-box w-full md:w-1/4 mb-6 md:mb-0 relative bg-white z-10">
+                        <div class="text-amber-600 font-bold mb-1">內部壓力</div>
+                        <div class="text-sm font-semibold">龐大美債壓力</div>
+                        <div class="text-xs text-slate-500 mt-2">需全球持續吸納美元</div>
+                    </div>
+
+                    <div class="hidden md:block text-slate-400 z-10 bg-stone-50 px-2">▶</div>
+                    <div class="md:hidden text-slate-400 my-2">▼</div>
+
+                    <div class="node-box w-full md:w-1/4 mb-6 md:mb-0 relative bg-white z-10 border-amber-300 border-2">
+                        <div class="text-amber-600 font-bold mb-1">核心目標</div>
+                        <div class="text-sm font-semibold">維護石油美元</div>
+                        <div class="text-xs text-slate-500 mt-2">打擊非美元結算試探 (伊朗/委國)</div>
+                    </div>
+
+                    <div class="hidden md:block text-slate-400 z-10 bg-stone-50 px-2">▶</div>
+                    <div class="md:hidden text-slate-400 my-2">▼</div>
+
+                    <div class="node-box w-full md:w-1/4 relative bg-white z-10">
+                        <div class="text-rose-600 font-bold mb-1">外部手段</div>
+                        <div class="text-sm font-semibold">軍事與關稅極限施壓</div>
+                        <div class="text-xs text-slate-500 mt-2">增加全球貿易談判籌碼</div>
+                    </div>
+                </div>
+
+                <div class="mt-12 bg-white p-6 rounded-lg border-l-4 border-slate-800 text-slate-700 leading-relaxed text-sm">
+                    <strong>總結論：</strong> 川普攻打（或維持高度動武威脅）伊朗，其深層動機可視為一場「一石三鳥」的戰略操作。首先，物理上震懾試圖瓦解<strong>石油美元體系</strong>的國家；其次，心理上向全球展示美國為維護霸權不惜動武的決心，從而為其<strong>對等關稅</strong>戰略增加談判桌上的籌碼；最後，確保全球大宗商品繼續與美元綁定，維持美元的高流動性與需求，這是防止美國天文數字<strong>國債</strong>泡沫破裂的最後防線。委內瑞拉事件是前奏，伊朗則是這場地緣經濟大戲的焦點。
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<script>
+    // --- State Management ---
+    let currentState = 'overview';
+    let charts = {};
+
+    // --- Navigation Logic ---
+    function navigate(sectionId) {
+        // Hide all sections
+        document.querySelectorAll('.content-section').forEach(el => {
+            el.classList.add('hidden');
+            el.classList.remove('fade-in');
+        });
+        
+        // Remove active class from all buttons
+        document.querySelectorAll('.nav-btn').forEach(el => {
+            el.classList.remove('active');
+        });
+
+        // Show target section with animation
+        const targetSection = document.getElementById(`sec-${sectionId}`);
+        targetSection.classList.remove('hidden');
+        // trigger reflow to restart animation
+        void targetSection.offsetWidth; 
+        targetSection.classList.add('fade-in');
+
+        // Update active button
+        document.getElementById(`btn-${sectionId}`).classList.add('active');
+        
+        // Scroll to top
+        window.scrollTo(0, 0);
+
+        // Render charts lazily based on section
+        if (sectionId === 'petrodollar' && !charts.petro) initPetroChart();
+        if (sectionId === 'tariffs' && !charts.tariff) initTariffRadar();
+        if (sectionId === 'debt' && !charts.debt) initDebtChart();
+
+        currentState = sectionId;
+    }
+
+    // --- Chart.js Implementations ---
+    
+    // Global Chart Configuration for Aesthetics
+    Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+    Chart.defaults.color = '#475569'; // text-slate-600
+    Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(15, 23, 42, 0.9)'; // slate-900
+
+    // 1. Petrodollar Chart (Line Chart showing currency dominance over time)
+    const petroData = {
+        labels: ['2000', '2005', '2010', '2015', '2020', '2025(預估)'],
+        datasets: [
+            {
+                label: '美元結算比例 (%)',
+                data: [98, 95, 92, 88, 82, 80],
+                borderColor: '#1e293b', // slate-800
+                backgroundColor: 'rgba(30, 41, 59, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: '非美元(歐元/人民幣) (%)',
+                data: [2, 5, 8, 12, 18, 20],
+                borderColor: '#d97706', // amber-600
+                borderWidth: 2,
+                borderDash: [5, 5],
+                tension: 0.4
+            }
+        ]
+    };
+
+    function initPetroChart() {
+        const ctx = document.getElementById('petroChart').getContext('2d');
+        charts.petro = new Chart(ctx, {
+            type: 'line',
+            data: petroData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false, // MANDATORY for responsive containers
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    title: { display: true, text: '全球石油貿易結算貨幣佔比演變 (概念模型)', font: { size: 16 } },
+                    legend: { position: 'bottom' }
+                },
+                scales: {
+                    y: { beginAtZero: true, max: 100, title: { display: true, text: '佔比 %' } }
+                }
+            }
+        });
+    }
+
+    function updatePetroChart(scenario) {
+        if(!charts.petro) return;
+        
+        if(scenario === 'dedollarization') {
+            // Simulate impact if Iran/others succeed
+            charts.petro.data.datasets[0].data = [98, 95, 92, 88, 75, 60]; // USD drops
+            charts.petro.data.datasets[1].data = [2, 5, 8, 12, 25, 40]; // Others rise
+            charts.petro.options.plugins.title.text = '模擬：去美元化加速情境';
+        } else {
+            // Restore status quo
+            charts.petro.data.datasets[0].data = [98, 95, 92, 88, 82, 80];
+            charts.petro.data.datasets[1].data = [2, 5, 8, 12, 18, 20];
+            charts.petro.options.plugins.title.text = '全球石油貿易結算貨幣佔比演變 (現狀維持模型)';
+        }
+        charts.petro.update();
+    }
+
+    // 2. Tariff & Leverage Chart (Radar Chart)
+    function initTariffRadar() {
+        const ctx = document.getElementById('tariffRadarChart').getContext('2d');
+        charts.tariff = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: ['關稅威懾力', '全球關注度', '談判不可預測性', '盟友依賴度(能源安全)', '國內支持度(強硬派)'],
+                datasets: [{
+                    label: '對伊動武威脅產生之溢出效應',
+                    data: [8, 9, 10, 7, 8],
+                    fill: true,
+                    backgroundColor: 'rgba(217, 119, 6, 0.2)', // amber
+                    borderColor: '#d97706',
+                    pointBackgroundColor: '#d97706',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#d97706'
+                }, {
+                    label: '常規外交手段',
+                    data: [4, 5, 3, 5, 4],
+                    fill: true,
+                    backgroundColor: 'rgba(100, 116, 139, 0.2)', // slate
+                    borderColor: '#64748b',
+                    pointBackgroundColor: '#64748b',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#64748b'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                elements: { line: { borderWidth: 3 } },
+                scales: { r: { angleLines: { display: false }, suggestedMin: 0, suggestedMax: 10 } },
+                plugins: {
+                     title: { display: true, text: '談判槓桿雷達分析', font:{size: 14} }
+                }
+            }
+        });
+    }
+
+    // 3. Debt Chart (Line & Bar combo)
+    function initDebtChart() {
+        const ctx = document.getElementById('debtChart').getContext('2d');
+        charts.debt = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['2015', '2016', '2017 (委國危機起)', '2018', '2019', '2020 (伊核危機升級)'],
+                datasets: [
+                    {
+                        type: 'line',
+                        label: '美國國債總額 (兆美元)',
+                        data: [18.1, 19.5, 20.2, 21.5, 22.7, 27.7],
+                        borderColor: '#be123c', // rose-700
+                        backgroundColor: '#be123c',
+                        borderWidth: 3,
+                        yAxisID: 'y',
+                    },
+                    {
+                        type: 'bar',
+                        label: '因制裁導致的受控石油產能 (百萬桶/日 概念值)',
+                        data: [0.5, 0.5, 1.2, 1.8, 2.5, 4.0], // Conceptual increasing impact
+                        backgroundColor: 'rgba(100, 116, 139, 0.6)', // slate
+                        yAxisID: 'y1',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    title: { display: true, text: '美國國債增長 vs. 對產油國施壓時程', font:{size: 16} }
+                },
+                scales: {
+                    y: {
+                        type: 'linear', display: true, position: 'left',
+                        title: { display: true, text: '國債 (兆美元)' }
+                    },
+                    y1: {
+                        type: 'linear', display: true, position: 'right',
+                        grid: { drawOnChartArea: false }, // only want the grid lines for one axis to show up
+                        title: { display: true, text: '受控/制裁產能指標' }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize the app by showing the overview
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initial setup
+    });
+
+</script>
+</body>
+</html>
