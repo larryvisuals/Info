@@ -4,8 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; worker-src 'self' blob:;">
+
     <title>流程架構師專用 - Mermaid 即時預覽編輯器</title>
-    <!-- 引入 Tailwind CSS 以實現快速的現代化排版 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* 自定義滾動條以提升 UI/UX 體驗 */
@@ -62,7 +64,6 @@
 
 <body class="bg-gray-100 h-screen flex flex-col font-sans text-gray-800">
 
-    <!-- 頂部導航 -->
     <header class="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center z-10">
         <div class="flex items-center gap-3">
             <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -73,7 +74,7 @@
             </svg>
             <h1 class="text-xl font-bold tracking-wide">Mermaid 邏輯流程圖即時編輯器</h1>
         </div>
-        <div class="text-sm text-slate-300 flex items-center gap-3">
+        <div class="text-sm text-slate-300 flex items-center gap-2">
             <!-- 儲存至本地資料庫按鈕 -->
             <button onclick="saveToLocal(event)"
                 class="text-xs bg-slate-700 hover:bg-slate-600 text-white border border-slate-600 px-3 py-1.5 rounded shadow-sm transition-colors flex items-center gap-1 font-medium">
@@ -84,19 +85,28 @@
                 </svg>
                 儲存設定
             </button>
+
+            <!-- 分享連結按鈕 (新增) -->
+            <button onclick="shareLink(event)"
+                class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500 px-3 py-1.5 rounded shadow-sm transition-colors flex items-center gap-1 font-medium mr-2">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z">
+                    </path>
+                </svg>
+                分享連結
+            </button>
+
             <div class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
                 <span class="hidden md:inline">支援即時渲染與語法除錯</span>
             </div>
         </div>
     </header>
 
-    <!-- 主要內容區 (左右分屏) -->
     <main class="flex-1 flex flex-col md:flex-row p-4 gap-4 overflow-hidden">
 
-        <!-- 左側：代碼編輯區與快速編輯區 -->
         <section class="flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <!-- 頁籤切換與工具區 -->
             <div class="bg-slate-100 border-b border-gray-200 px-4 pt-2 flex justify-between items-end">
                 <div class="flex space-x-1 font-sans">
                     <button id="tab-code"
@@ -111,79 +121,67 @@
                 <div class="pb-1.5 flex items-center gap-2">
                     <button onclick="copyCode(event)"
                         class="text-xs bg-white border border-gray-300 hover:bg-gray-100 px-3 py-1.5 rounded shadow-sm transition-colors text-slate-600 flex items-center gap-1">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
-                        </path>
-                    </svg>
-                    複製代碼
-                </button>
-            </div>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        複製代碼
+                    </button>
+                </div>
             </div>
 
-            <!-- 原生代碼輸入框 -->
             <textarea id="mermaid-input"
                 class="flex-1 w-full p-4 resize-none outline-none font-mono text-sm leading-relaxed text-slate-700 bg-slate-50 focus:bg-white transition-colors"
                 spellcheck="false">
-%% 這是一個預設的 UI/UX 登入流程範例
-%% 採用由上到下的主動線設計
+%% 銷退明細流程圖
 flowchart TD
-    %% 核心起點
-    A[確認銷退明細] --> B{是否需要實體退貨?}
+%% 核心起點
+A[確認銷退明細] --> B{實體退貨}
 
-    %% 第一層分支
-    B -->|是：實體退回| C[執行實體退回]
-    B -->|否：不退貨 / 折讓| F[確認折讓處理類型]
+%% 第一層分支
+B -->|是:實體退回 | C[倉庫確定收到退貨]
+B -->|否：不退貨 / 折讓| F[賣方開立銷退折讓單]
 
-    %% 第二層平行步驟
-    C --> D1[送簽核]
-    F --> D2[送簽核]
+%% 第二層平行步驟
+C --> D1[銷退折讓單送簽核]
 
-    %% 第三層與右側分流
-    D1 --> E[財務執行：做銷貨退回]
-    D2 --> H{折讓方式分流?}
+%% 第三層與右側分流
+D1 --> E[財務執行：銷貨退回]
+F --> H{折讓方式}
 
-    %% 右側最終執行
-    H -->|存證| I[CS 執行：做折讓]
-    H -->|交換| J[財務執行：做折讓]
+%% 右側最終執行
+H -->|交換| J[財務執行：折讓]
+H -->|存證| I[CS 執行：折讓]
 
-    %% ==========================================
-    %% 排版魔法：使用隱藏節點來平衡左側的視覺比重
-    %% 讓 Mermaid 引擎以為左邊也長出了兩個分支，強制整體置中
-    %% ==========================================
-    E ~~~ hidden1[ ]
-    E ~~~ hidden2[ ]
-    style hidden1 display:none;
-    style hidden2 display:none;
+J --> D2[銷退折讓單送簽核]
+I --> D2[銷退折讓單送簽核]
 
-    %% 狀態與角色樣式定義 (UI/UX 視覺優化)
-    classDef default fill:#f9f9f9,stroke:#666,stroke-width:2px;
-    classDef finance fill:#ffebee,stroke:#d32f2f,stroke-width:2px;
-    classDef cs fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
-    classDef decision fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
+D2 --> G[送財務部]
 
-    %% 套用樣式
-    class B,H decision;
-    class E,J finance;
-    class I cs;
+%% 狀態與角色樣式定義 (UI/UX 視覺優化)
+classDef default fill:#f9f9f9,stroke:#666,stroke-width:2px;
+classDef finance fill:#ffebee,stroke:#d32f2f,stroke-width:2px;
+classDef cs fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
+classDef decision fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
+
+%% 套用樣式
+class B,H decision;
+class E,J finance;
+class I cs;
             </textarea>
 
-            <!-- 視覺化填表容器 -->
             <div id="form-container" class="flex-1 w-full p-4 overflow-y-auto hidden bg-slate-50">
-                <!-- 透過 JavaScript 動態生成表單 -->
             </div>
         </section>
 
-        <!-- 右側：預覽與錯誤提示區 -->
         <section
             class="flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
             <div
                 class="bg-slate-50 border-b border-gray-200 px-4 py-2 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-2">
                 <span class="font-semibold text-slate-700 text-sm hidden xl:block">視覺化預覽</span>
 
-                <!-- 工具列 -->
                 <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto">
-                    <!-- 圖表主題設定器 -->
                     <div class="flex items-center border border-gray-300 rounded bg-white px-2 py-1 shadow-sm">
                         <label for="theme-select" class="text-xs text-slate-500 mr-2">圖表主題</label>
                         <select id="theme-select"
@@ -195,7 +193,6 @@ flowchart TD
                         </select>
                     </div>
 
-                    <!-- 畫布背景設定器 -->
                     <div class="flex items-center border border-gray-300 rounded bg-white px-2 py-1 shadow-sm">
                         <label for="pattern-select" class="text-xs text-slate-500 mr-2">畫布樣式</label>
                         <select id="pattern-select"
@@ -206,7 +203,6 @@ flowchart TD
                         </select>
                     </div>
 
-                    <!-- 背景顏色設定器 -->
                     <div class="flex items-center gap-2 border border-gray-300 rounded bg-white px-2 py-1 shadow-sm"
                         title="更改預覽區塊背景顏色">
                         <label for="bg-color-picker" class="text-xs text-slate-500 cursor-pointer">底色</label>
@@ -214,7 +210,6 @@ flowchart TD
                             class="w-5 h-5 p-0 border-0 bg-transparent cursor-pointer outline-none">
                     </div>
 
-                    <!-- 匯出按鈕 -->
                     <button onclick="exportToPNG(event)"
                         class="ml-auto xl:ml-2 text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 px-3 py-1.5 rounded shadow-sm transition-colors flex items-center gap-1 font-medium">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,14 +221,11 @@ flowchart TD
                 </div>
             </div>
 
-            <!-- 渲染容器 -->
             <div id="mermaid-output"
                 class="flex-1 overflow-auto p-4 flex items-start justify-center bg-white bg-pattern-dots transition-colors duration-200"
                 style="background-color: #ffffff;">
-                <!-- SVG 會被注入到這裡 -->
             </div>
 
-            <!-- 錯誤訊息容器 -->
             <div id="error-container"
                 class="hidden absolute bottom-0 left-0 right-0 bg-red-50 border-t-2 border-red-500 p-4 shadow-lg transform transition-transform">
                 <div class="flex items-start gap-2">
@@ -253,24 +245,30 @@ flowchart TD
 
     </main>
 
-    <!-- 引入 Mermaid.js -->
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
 
         let currentTheme = 'default';
 
+        // ✅ 資安修復：跳脫函式，防止 XSS
+        function escapeHTML(str) {
+            if (!str) return '';
+            const map = { '&': '&amp;','<': '&lt;','>': '&gt;','"': '&quot;',"'": '&#039;' };
+            return str.replace(/[&<>"']/g,function (m) { return map[m]; });
+        }
+
         // 初始化 Mermaid 的函數
         function initMermaid() {
-        mermaid.initialize({
-            startOnLoad: false,
+            mermaid.initialize({
+                startOnLoad: false,
                 theme: currentTheme,
-            securityLevel: 'loose',
-            flowchart: {
-                useMaxWidth: false,
-                htmlLabels: true,
+                securityLevel: 'strict', // 允許渲染標籤尺寸，安全防護由 escapeHTML 和 CSP 負責
+                flowchart: {
+                    useMaxWidth: false,
+                    htmlLabels: true,
                     curve: 'linear'
-            }
-        });
+                }
+            });
         }
 
         // 首次初始化
@@ -290,15 +288,57 @@ flowchart TD
 
         let timeoutId;
 
-        // 用於視覺化填表的狀態變數
         let currentTemplate = '';
         let currentNodes = [];
 
         // ------------------
-        // 本地資料庫 (localStorage) 讀寫功能
+        // Base64 編碼/解碼邏輯 (支援 Unicode / 中文)
         // ------------------
+        function encodeState(data) {
+            return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+        }
+
+        function decodeState(base64) {
+            return JSON.parse(decodeURIComponent(escape(atob(base64))));
+        }
+
+        // ------------------
+        // 分享與本地儲存功能
+        // ------------------
+        window.shareLink = function (event) {
+            const dataToShare = {
+                c: inputElement.value,
+                t: currentTheme,
+                p: patternSelect.value,
+                b: bgColorPicker.value
+            };
+
+            const encodedHash = '#share=' + encodeState(dataToShare);
+            const shareUrl = window.location.origin + window.location.pathname + window.location.search + encodedHash;
+
+            // 複製到剪貼簿
+            const tempInput = document.createElement('input');
+            tempInput.value = shareUrl;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            // UI 狀態回饋
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 連結已複製!`;
+            btn.classList.add('bg-green-600','border-green-500');
+            btn.classList.remove('bg-indigo-600','border-indigo-500');
+
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('bg-green-600','border-green-500');
+                btn.classList.add('bg-indigo-600','border-indigo-500');
+            },2000);
+        };
+
         window.saveToLocal = function (event) {
-            // 將所有設定打包成 JSON
             const dataToSave = {
                 code: inputElement.value,
                 theme: currentTheme,
@@ -306,10 +346,8 @@ flowchart TD
                 bgColor: bgColorPicker.value
             };
 
-            // 寫入瀏覽器本地儲存
             localStorage.setItem('mermaid_editor_data',JSON.stringify(dataToSave));
 
-            // UI 按鈕狀態反饋
             const btn = event.currentTarget;
             const originalHTML = btn.innerHTML;
             btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 已儲存!`;
@@ -323,32 +361,53 @@ flowchart TD
             },1500);
         };
 
-        function loadFromLocal() {
+        function loadState() {
+            const hash = window.location.hash;
+
+            // 1. 優先判斷是否為「分享連結」
+            if (hash.startsWith('#share=')) {
+                try {
+                    const base64Data = hash.substring(7);
+                    const data = decodeState(base64Data);
+
+                    if (data.c) inputElement.value = data.c;
+                    if (data.t) {
+                        currentTheme = data.t;
+                        themeSelect.value = data.t;
+                        initMermaid();
+                    }
+                    if (data.p) {
+                        patternSelect.value = data.p;
+                        outputElement.classList.remove('bg-pattern-dots','bg-pattern-grid','bg-pattern-none');
+                        outputElement.classList.add(data.p);
+                    }
+                    if (data.b) {
+                        bgColorPicker.value = data.b;
+                        outputElement.style.backgroundColor = data.b;
+                    }
+                    return true; // 成功從分享連結載入
+                } catch (e) {
+                    console.error('無法解析分享連結的設定：',e);
+                    // 發生錯誤則退回讀取本地端
+                }
+            }
+
+            // 2. 若無分享連結，讀取「本地端存檔」
             const savedData = localStorage.getItem('mermaid_editor_data');
             if (savedData) {
                 try {
                     const data = JSON.parse(savedData);
-
-                    // 還原代碼
-                    if (data.code) {
-                        inputElement.value = data.code;
-                    }
-
-                    // 還原主題
+                    if (data.code) inputElement.value = data.code;
                     if (data.theme) {
                         currentTheme = data.theme;
                         themeSelect.value = data.theme;
                         initMermaid();
                     }
-
-                    // 還原背景樣式
                     if (data.pattern) {
                         patternSelect.value = data.pattern;
                         outputElement.classList.remove('bg-pattern-dots','bg-pattern-grid','bg-pattern-none');
                         outputElement.classList.add(data.pattern);
                     }
-
-                    // 還原背景顏色
                     if (data.bgColor) {
                         bgColorPicker.value = data.bgColor;
                         outputElement.style.backgroundColor = data.bgColor;
@@ -357,6 +416,7 @@ flowchart TD
                     console.error('無法解析本地存檔設定：',e);
                 }
             }
+            return false;
         }
 
         // ------------------
@@ -451,7 +511,7 @@ flowchart TD
                         <div class="flex items-center gap-1.5 mb-2 pl-2">
                             <span class="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest ${badgeColor}">${node.type}</span>
                         </div>
-                        <input type="text" data-idx="${idx}" value="${node.text}" placeholder="請輸入文字..." 
+                        <input type="text" data-idx="${idx}" value="${escapeHTML(node.text)}" placeholder="請輸入文字..." 
                                class="form-input w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all">
                     </div>
                 `;
@@ -521,7 +581,7 @@ flowchart TD
         });
 
         // ------------------
-        // 全局操作功能 (匯出功能已強化 Taint 防護)
+        // 工具列操作功能
         // ------------------
         window.copyCode = function (event) {
             inputElement.select();
@@ -553,7 +613,6 @@ flowchart TD
 
             btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 處理中...`;
 
-            // 確保有命名空間以防部分瀏覽器出錯
             const clone = svgElement.cloneNode(true);
             if (!clone.getAttribute('xmlns')) {
                 clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
@@ -572,20 +631,19 @@ flowchart TD
             clone.setAttribute('width',width);
             clone.setAttribute('height',height);
 
-            // 解決防護：改用 Base64 的 Data URI 繞過簡單的 Blob 跨源阻擋
             const svgData = new XMLSerializer().serializeToString(clone);
             const base64Data = btoa(unescape(encodeURIComponent(svgData)));
             const url = `data:image/svg+xml;base64,${base64Data}`;
 
             const canvas = document.createElement('canvas');
-            const scale = 2; // Retina 高畫質
+            const scale = 2;
             canvas.width = width * scale;
             canvas.height = height * scale;
             const ctx = canvas.getContext('2d');
             ctx.scale(scale,scale);
 
             const img = new Image();
-            img.crossOrigin = 'anonymous'; // 關鍵：宣告允許跨域存取
+            img.crossOrigin = 'anonymous';
 
             img.onload = function () {
                 ctx.fillStyle = bgColorPicker.value;
@@ -593,20 +651,18 @@ flowchart TD
                 ctx.drawImage(img,0,0,width,height);
 
                 try {
-                    // 嘗試匯出 PNG
-                const pngUrl = canvas.toDataURL('image/png');
-                const downloadLink = document.createElement('a');
-                downloadLink.href = pngUrl;
-                downloadLink.download = `${new Date().getTime()}.png`;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
+                    const pngUrl = canvas.toDataURL('image/png');
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = pngUrl;
+                    downloadLink.download = `Flowchart_${new Date().getTime()}.png`;
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
 
-                btn.innerHTML = originalHTML;
+                    btn.innerHTML = originalHTML;
                 } catch (e) {
                     console.warn('Canvas 被安全機制封鎖，降級改為匯出 SVG：',e);
 
-                    // Fallback 優雅降級：若 PNG 被阻擋，直接匯出高畫質 SVG 檔案給使用者
                     const svgBlob = new Blob([svgData],{ type: 'image/svg+xml;charset=utf-8' });
                     const svgUrl = URL.createObjectURL(svgBlob);
                     const downloadLink = document.createElement('a');
@@ -617,7 +673,6 @@ flowchart TD
                     document.body.removeChild(downloadLink);
                     URL.revokeObjectURL(svgUrl);
 
-                    // 顯示降級提示
                     btn.innerHTML = `已改為 SVG 匯出`;
                     btn.classList.add('bg-yellow-100','text-yellow-700','border-yellow-300');
                     setTimeout(() => {
@@ -640,8 +695,8 @@ flowchart TD
             img.src = url;
         };
 
-        // 頁面載入時：先讀取本地儲存，再渲染圖表
-        loadFromLocal();
+        // 頁面載入時啟動流程：優先讀取網址分享設定 -> 若無則讀取本地儲存 -> 執行渲染
+        loadState();
         renderDiagram();
     </script>
 </body>
