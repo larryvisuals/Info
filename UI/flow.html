@@ -597,7 +597,7 @@ flowchart TD
                 const pngUrl = canvas.toDataURL('image/png');
                 const downloadLink = document.createElement('a');
                 downloadLink.href = pngUrl;
-                downloadLink.download = `Mermaid_Flowchart_${new Date().getTime()}.png`;
+                downloadLink.download = `${new Date().getTime()}.png`;
                 document.body.appendChild(downloadLink);
                 downloadLink.click();
                 document.body.removeChild(downloadLink);
