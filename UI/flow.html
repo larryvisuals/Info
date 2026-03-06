@@ -221,7 +221,7 @@ flowchart TD
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
                         </svg>
-                        匯出 PNG
+                        匯出圖片檔
                     </button>
                 </div>
             </div>
@@ -521,7 +521,7 @@ flowchart TD
         });
 
         // ------------------
-        // 全局操作功能 
+        // 全局操作功能 (匯出功能已強化 Taint 防護)
         // ------------------
         window.copyCode = function (event) {
             inputElement.select();
@@ -553,7 +553,13 @@ flowchart TD
 
             btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 處理中...`;
 
-            const viewBox = svgElement.getAttribute('viewBox');
+            // 確保有命名空間以防部分瀏覽器出錯
+            const clone = svgElement.cloneNode(true);
+            if (!clone.getAttribute('xmlns')) {
+                clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+            }
+
+            const viewBox = clone.getAttribute('viewBox');
             let width = svgElement.getBoundingClientRect().width;
             let height = svgElement.getBoundingClientRect().height;
 
@@ -563,28 +569,31 @@ flowchart TD
                 height = Math.max(height,parseFloat(parts[3]));
             }
 
-            const clone = svgElement.cloneNode(true);
             clone.setAttribute('width',width);
             clone.setAttribute('height',height);
 
+            // 解決防護：改用 Base64 的 Data URI 繞過簡單的 Blob 跨源阻擋
             const svgData = new XMLSerializer().serializeToString(clone);
-            const blob = new Blob([svgData],{ type: 'image/svg+xml;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
+            const base64Data = btoa(unescape(encodeURIComponent(svgData)));
+            const url = `data:image/svg+xml;base64,${base64Data}`;
 
             const canvas = document.createElement('canvas');
-            const scale = 2;
+            const scale = 2; // Retina 高畫質
             canvas.width = width * scale;
             canvas.height = height * scale;
             const ctx = canvas.getContext('2d');
             ctx.scale(scale,scale);
 
             const img = new Image();
+            img.crossOrigin = 'anonymous'; // 關鍵：宣告允許跨域存取
+
             img.onload = function () {
                 ctx.fillStyle = bgColorPicker.value;
                 ctx.fillRect(0,0,width,height);
                 ctx.drawImage(img,0,0,width,height);
-                URL.revokeObjectURL(url);
 
+                try {
+                    // 嘗試匯出 PNG
                 const pngUrl = canvas.toDataURL('image/png');
                 const downloadLink = document.createElement('a');
                 downloadLink.href = pngUrl;
@@ -594,7 +603,40 @@ flowchart TD
                 document.body.removeChild(downloadLink);
 
                 btn.innerHTML = originalHTML;
+                } catch (e) {
+                    console.warn('Canvas 被安全機制封鎖，降級改為匯出 SVG：',e);
+
+                    // Fallback 優雅降級：若 PNG 被阻擋，直接匯出高畫質 SVG 檔案給使用者
+                    const svgBlob = new Blob([svgData],{ type: 'image/svg+xml;charset=utf-8' });
+                    const svgUrl = URL.createObjectURL(svgBlob);
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = svgUrl;
+                    downloadLink.download = `Mermaid_Flowchart_${new Date().getTime()}.svg`;
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    URL.revokeObjectURL(svgUrl);
+
+                    // 顯示降級提示
+                    btn.innerHTML = `已改為 SVG 匯出`;
+                    btn.classList.add('bg-yellow-100','text-yellow-700','border-yellow-300');
+                    setTimeout(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.classList.remove('bg-yellow-100','text-yellow-700','border-yellow-300');
+                    },2500);
+                }
             };
+
+            img.onerror = function (e) {
+                console.error('圖片載入失敗',e);
+                btn.innerHTML = `匯出失敗`;
+                btn.classList.add('bg-red-100','text-red-700','border-red-300');
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove('bg-red-100','text-red-700','border-red-300');
+                },1500);
+            };
+
             img.src = url;
         };
 
